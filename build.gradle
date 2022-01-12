@@ -3,7 +3,6 @@ plugins {
     id 'idea'
     id 'eclipse'
     id 'maven-publish'
-    id "com.jfrog.bintray" version "1.8.4"
 }
 
 group = 'net.minecraftforge.gradle'
@@ -34,7 +33,7 @@ repositories {
         url = "https://repo.eclipse.org/content/groups/eclipse/"
     }
     maven {
-        // because SpecialSource doesnt have a full release
+        // because SpecialSource doesn't have a full release
         name = "sonatype"
         url = "https://oss.sonatype.org/content/repositories/snapshots/"
     }
@@ -109,8 +108,8 @@ javadoc {
 
     // linked javadoc urls.. why not...
     options.addStringOption 'link', 'https://gradle.org/docs/current/javadoc/'
-    options.addStringOption 'link', 'http://docs.guava-libraries.googlecode.com/git-history/v18.0/javadoc'
-    options.addStringOption 'link', 'http://asm.ow2.org/asm50/javadoc/user/'
+    options.addStringOption 'link', 'https://javadoc.io/doc/com.google.guava/guava/18.0/'
+    options.addStringOption 'link', 'https://asm.ow2.io/javadoc/'
 }
 
 task javadocJar(type: Jar, dependsOn: javadoc) {
