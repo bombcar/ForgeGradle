@@ -643,7 +643,7 @@ public class ForgeDevPlugin extends DevBasePlugin {
         String build = "0";
 
         String prefix = "public static final int";
-        List<String> lines = (List<String>) FileUtils.readLines(project.file(file));
+        List<String> lines = FileUtils.readLines(project.file(file));
         for (String s : lines) {
             s = s.trim();
             if (s.startsWith(prefix)) {

@@ -28,6 +28,8 @@ public abstract class DelayedBase<V> extends Closure<V> {
         this(owner, pattern, RESOLVER);
     }
 
+    @SafeVarargs
+    @SuppressWarnings("varargs")
     public DelayedBase(Project owner, String pattern, IDelayedResolver<? extends BaseExtension>... resolvers) {
         super(owner);
         this.project = owner;

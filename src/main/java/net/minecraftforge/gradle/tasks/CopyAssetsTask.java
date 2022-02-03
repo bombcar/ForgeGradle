@@ -57,7 +57,7 @@ public class CopyAssetsTask extends DefaultTask {
     }
 
     public AssetIndex getAssetIndex() {
-        return (AssetIndex) assetIndex.call();
+        return assetIndex.call();
     }
 
     public void setAssetIndex(Closure<AssetIndex> assetIndex) {

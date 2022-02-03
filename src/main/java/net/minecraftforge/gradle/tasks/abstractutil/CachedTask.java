@@ -270,7 +270,7 @@ public abstract class CachedTask extends DefaultTask {
                 methodName += new String(name);
 
                 try {
-                    method = taskClass.getMethod(methodName, new Class[0]);
+                    method = taskClass.getMethod(methodName);
                 } catch (NoSuchMethodException e) {
                     // method not found. Grab the field via reflection
                     f.setAccessible(true);
@@ -278,7 +278,7 @@ public abstract class CachedTask extends DefaultTask {
                 }
             }
 
-            return method.invoke(instance, new Object[0]);
+            return method.invoke(instance);
         }
     }
 

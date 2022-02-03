@@ -354,12 +354,12 @@ public class ProcessJarTask extends CachedTask {
         if ((node.access & Opcodes.ACC_ENUM) == 0 && !node.superName.equals("java/lang/Enum") && (node.access & Opcodes.ACC_SYNTHETIC) == 0) {
             // ^^ is for ignoring enums.
 
-            for (FieldNode f : ((List<FieldNode>) node.fields)) {
+            for (FieldNode f : node.fields) {
                 f.access = f.access & (0xffffffff - Opcodes.ACC_SYNTHETIC);
                 //getLogger().lifecycle("Stripping field: "+f.name);
             }
 
-            for (MethodNode m : ((List<MethodNode>) node.methods)) {
+            for (MethodNode m : node.methods) {
                 m.access = m.access & (0xffffffff - Opcodes.ACC_SYNTHETIC);
                 //getLogger().lifecycle("Stripping method: "+m.name);
             }
