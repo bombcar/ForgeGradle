@@ -1,6 +1,5 @@
 package net.minecraftforge.gradle.dev;
 
-import com.google.common.base.Throwables;
 import groovy.lang.Closure;
 import net.minecraftforge.gradle.CopyInto;
 import net.minecraftforge.gradle.common.Constants;
@@ -180,12 +179,9 @@ public class ForgeDevPlugin extends DevBasePlugin {
 
     }
 
-    @SuppressWarnings("serial")
     private void createProjectTasks() {
         FMLVersionPropTask sub = makeTask("createVersionPropertiesFML", FMLVersionPropTask.class);
         {
-            //sub.setTasks("createVersionProperties");
-            //sub.setBuildFile(delayedFile("{FML_DIR}/build.gradle"));
             sub.setVersion(new Closure<String>(project) {
                 @Override
                 public String call(Object... args) {
@@ -400,7 +396,6 @@ public class ForgeDevPlugin extends DevBasePlugin {
         }
     }
 
-    @SuppressWarnings("serial")
     private void createPackageTasks() {
         CrowdinDownloadTask crowdin = makeTask("getLocalizations", CrowdinDownloadTask.class);
         {
@@ -464,7 +459,7 @@ public class ForgeDevPlugin extends DevBasePlugin {
                     try {
                         signJar(((DelayedJar) arg0).getArchivePath(), "forge", "*/*/**", "!paulscode/**");
                     } catch (Exception e) {
-                        Throwables.propagate(e);
+                        throw new RuntimeException(e);
                     }
                 }
             });
@@ -651,9 +646,17 @@ public class ForgeDevPlugin extends DevBasePlugin {
                 s = s.replace('=', ' ').replace("Version", "").replaceAll(" +", " ").trim();
                 String[] pts = s.split(" ");
 
-                if (pts[0].equals("major")) major = pts[pts.length - 1];
-                else if (pts[0].equals("minor")) minor = pts[pts.length - 1];
-                else if (pts[0].equals("revision")) revision = pts[pts.length - 1];
+                switch (pts[0]) {
+                    case "major":
+                        major = pts[pts.length - 1];
+                        break;
+                    case "minor":
+                        minor = pts[pts.length - 1];
+                        break;
+                    case "revision":
+                        revision = pts[pts.length - 1];
+                        break;
+                }
             }
         }
 
@@ -661,7 +664,7 @@ public class ForgeDevPlugin extends DevBasePlugin {
             build = System.getenv("BUILD_NUMBER");
         }
 
-        String branch = null;
+        String branch;
         if (!System.getenv().containsKey("GIT_BRANCH")) {
             branch = runGit(project, project.getProjectDir(), "rev-parse", "--abbrev-ref", "HEAD");
         } else {
@@ -669,7 +672,7 @@ public class ForgeDevPlugin extends DevBasePlugin {
             branch = branch.substring(branch.lastIndexOf('/') + 1);
         }
 
-        if (branch != null && (branch.equals("master") || branch.equals("HEAD"))) {
+        if (branch.equals("master") || branch.equals("HEAD")) {
             branch = null;
         }
 
