@@ -168,8 +168,8 @@ public abstract class BasePlugin<K extends BaseExtension> implements Plugin<Proj
             ));
         }
 
-        if (!displayBanner)
-            return;
+        //if (!displayBanner)
+        //    return;
         Logger logger = this.project.getLogger();
         logger.lifecycle("#################################################");
         logger.lifecycle("         ForgeGradle {}        ", this.getVersionString());
@@ -180,7 +180,7 @@ public abstract class BasePlugin<K extends BaseExtension> implements Plugin<Proj
         logger.lifecycle("         by: Searge, ProfMobius, Fesh0r,         ");
         logger.lifecycle("         R4wk, ZeuX, IngisKahn, bspkrs           ");
         logger.lifecycle("#################################################");
-        //displayBanner = false;
+        displayBanner = false;
     }
 
     private String getVersionString() {
