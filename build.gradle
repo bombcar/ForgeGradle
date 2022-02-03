@@ -3,6 +3,8 @@ plugins {
     id 'idea'
     id 'eclipse'
     id 'maven-publish'
+    id "com.jfrog.bintray" version "1.8.4"
+    id('com.palantir.git-version') version('0.13.0')
 }
 
 group = 'net.minecraftforge.gradle'
@@ -10,7 +12,7 @@ group = 'net.minecraftforge.gradle'
 if (project.hasProperty("push_release")) {
     version = '1.2-4.0.0'
 } else {
-    version = '1.2-SNAPSHOT'
+    version = gitVersion()
 }
 
 archivesBaseName = 'ForgeGradle'
@@ -20,9 +22,13 @@ sourceCompatibility = '1.8'
 repositories {
     mavenLocal()
     maven {
-        name = "GT forge Mirror"
-	url = "https://gregtech.overminddl1.com/"
-    }	
+        name = "forge"
+        url = "https://maven.minecraftforge.net/"
+    }
+	maven {
+		name = "GT forge Mirror"
+		url = "https://gregtech.overminddl1.com/"
+	}	
     maven {
         // because Srg2Source needs an eclipse dependency.
         name = "eclipse"
@@ -48,7 +54,7 @@ jar {
     manifest {
         attributes 'version': project.version, 'javaCompliance': project.targetCompatibility
         attributes 'group': project.group
-        attributes 'Implementation-Version': project.version + getGitHash()
+        attributes 'Implementation-Version': project.version + versionDetails().gitHash
     }
 }
 
@@ -60,37 +66,39 @@ dependencies {
     compile gradleApi()
 
     // moved to the beginning to be the overrider
-    compile 'org.ow2.asm:asm-debug-all:5.2'
-    compile 'com.google.guava:guava:31.0.1-jre'
+    compile 'org.ow2.asm:asm-debug-all:5.0.3'
+    compile 'com.google.guava:guava:18.0'
 
     compile 'net.sf.opencsv:opencsv:2.3' // reading CSVs.. also used by SpecialSource
-    compile 'com.cloudbees:diff4j:1.3' // for diffing and patching
-    compile 'com.github.abrarsyed.jastyle:jAstyle:1.3' // formatting
+    compile 'com.cloudbees:diff4j:1.1' // for difing and patching
+    compile 'com.github.abrarsyed.jastyle:jAstyle:1.2' // formatting
     compile 'com.github.JetBrains:intellij-deps-trove4j:c08db9d' //JETBRAINS/Ubuntu/Jenkins fix
     compile 'com.github.jponge:lzma-java:1.3' // replaces the LZMA binary
     compile 'com.nothome:javaxdelta:2.0.1' // GDIFF implementation for BinPatches
-    compile 'com.google.code.gson:gson:2.8.9' // Used instead of Argo for building changelog.
-    compile 'com.github.tony19:named-regexp:0.2.6' // 1.7 Named regexp features
+    compile 'com.google.code.gson:gson:2.2.4' // Used instead of Argo for building changelog.
+    compile 'com.github.tony19:named-regexp:0.2.3' // 1.7 Named regexp features
 
-    compile 'com.github.bombcar:SpecialSource:master-SNAPSHOT' // deobf and reobs
+    compile 'net.md-5:SpecialSource:1.7.3' // deobf and reobs
 
     // because curse
-    compile 'org.apache.httpcomponents:httpclient:4.5.13'
-    compile 'org.apache.httpcomponents:httpmime:4.5.13'
+    compile 'org.apache.httpcomponents:httpclient:4.3.3'
+    compile 'org.apache.httpcomponents:httpmime:4.3.3'
 
     // mcp stuff
     compile 'de.oceanlabs.mcp:RetroGuard:3.6.6'
     compile 'de.oceanlabs.mcp:mcinjector:3.2-SNAPSHOT'
-    compile 'com.github.bombcar:Srg2Source:master-SNAPSHOT'
+    compile 'net.minecraftforge.srg2source:Srg2Source:3.2-SNAPSHOT'
 
     // The old version used by S2S is gone, so we need to force the latest build of that minor release
-    compile 'org.eclipse.jdt:org.eclipse.jdt.core:3.18.0'
+    compile('org.eclipse.jdt:org.eclipse.jdt.core:3.10.0+') {
+        force = true
+    }
 
     //Stuff used in the GradleStart classes
     compileOnly 'com.mojang:authlib:1.5.16'
     compileOnly "net.minecraft:launchwrapper:1.11"
 
-    testCompile 'junit:junit:4.13.2'
+    testCompile 'junit:junit:4.+'
 }
 
 compileJava {
@@ -102,8 +110,8 @@ javadoc {
 
     // linked javadoc urls.. why not...
     options.addStringOption 'link', 'https://gradle.org/docs/current/javadoc/'
-    options.addStringOption 'link', 'https://javadoc.io/doc/com.google.guava/guava/18.0/'
-    options.addStringOption 'link', 'https://asm.ow2.io/javadoc/'
+    options.addStringOption 'link', 'http://docs.guava-libraries.googlecode.com/git-history/v18.0/javadoc'
+    options.addStringOption 'link', 'http://asm.ow2.org/asm50/javadoc/user/'
 }
 
 task javadocJar(type: Jar, dependsOn: javadoc) {
@@ -143,7 +151,7 @@ publishing {
 
                 issueManagement {
                     system = 'github'
-                    url = 'https://github.com/GTNewHorizons/ForgeGradle/issues'
+                    url = 'https://github.com/GTNewHorizons/GT-New-Horizons-Modpack/issues'
                 }
 
                 licenses {
@@ -178,12 +186,6 @@ publishing {
     }
 }
 
-// write out version so its convenient for doc deployment
+// write out version so it's convenient for doc deployment
 file('build').mkdirs()
 file('build/version.txt').text = version;
-
-def getGitHash() {
-    def process = 'git rev-parse --short HEAD'.execute()
-    process.waitFor()
-    return '-' + (process.exitValue() ? 'unknown' : process.text.trim())
-}
