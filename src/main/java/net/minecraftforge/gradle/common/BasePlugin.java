@@ -58,7 +58,7 @@ public abstract class BasePlugin<K extends BaseExtension> implements Plugin<Proj
                 if (canOverlayPlugin()) {
                     project.getLogger().info("Applying Overlay");
 
-                    // found another BasePlugin thats already applied.
+                    // found another BasePlugin that's already applied.
                     // do only overlay stuff and return;
                     otherPlugin = (BasePlugin) p;
                     applyOverlayPlugin();
@@ -107,7 +107,7 @@ public abstract class BasePlugin<K extends BaseExtension> implements Plugin<Proj
         project.afterEvaluate(new Action<Project>() {
             @Override
             public void execute(Project project) {
-                // dont continue if its already failed!
+                // don't continue if it's already failed!
                 if (project.getState().getFailure() != null)
                     return;
 
@@ -173,14 +173,14 @@ public abstract class BasePlugin<K extends BaseExtension> implements Plugin<Proj
         Logger logger = this.project.getLogger();
         logger.lifecycle("#################################################");
         logger.lifecycle("         ForgeGradle {}        ", this.getVersionString());
-        logger.lifecycle("  https://github.com/MinecraftForge/ForgeGradle  ");
+        logger.lifecycle("   https://github.com/GTNewHorizons/ForgeGradle  ");
         logger.lifecycle("#################################################");
         logger.lifecycle("               Powered by MCP {}               ", this.delayedString("{MCP_VERSION}"));
         logger.lifecycle("             http://modcoderpack.com             ");
         logger.lifecycle("         by: Searge, ProfMobius, Fesh0r,         ");
         logger.lifecycle("         R4wk, ZeuX, IngisKahn, bspkrs           ");
         logger.lifecycle("#################################################");
-        displayBanner = false;
+        //displayBanner = false;
     }
 
     private String getVersionString() {
@@ -275,7 +275,7 @@ public abstract class BasePlugin<K extends BaseExtension> implements Plugin<Proj
         {
             clearCache.delete(delayedFile("{CACHE_DIR}/minecraft"));
             clearCache.setGroup("ForgeGradle");
-            clearCache.setDescription("Cleares the ForgeGradle cache. DONT RUN THIS unless you want a fresh start, or the dev tells you to.");
+            clearCache.setDescription("Clears the ForgeGradle cache. DON'T RUN THIS unless you want a fresh start, or the dev tells you to.");
         }
 
         // special userDev stuff
