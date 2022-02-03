@@ -1,12 +1,12 @@
 package net.minecraftforge.gradle.user;
 
-import com.google.common.base.Joiner;
 import com.google.common.base.Strings;
 import com.google.common.base.Throwables;
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.Lists;
 import com.google.common.io.Files;
 import groovy.lang.Closure;
+import net.minecraftforge.gradle.common.BaseExtension;
 import net.minecraftforge.gradle.common.BasePlugin;
 import net.minecraftforge.gradle.common.Constants;
 import net.minecraftforge.gradle.delayed.DelayedFile;
@@ -32,10 +32,7 @@ import org.gradle.api.tasks.compile.GroovyCompile;
 import org.gradle.api.tasks.compile.JavaCompile;
 import org.gradle.api.tasks.scala.ScalaCompile;
 import org.gradle.plugins.ide.idea.model.IdeaModel;
-import org.w3c.dom.DOMException;
-import org.w3c.dom.Document;
-import org.w3c.dom.Element;
-import org.w3c.dom.NodeList;
+import org.w3c.dom.*;
 
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
@@ -46,12 +43,15 @@ import javax.xml.transform.dom.DOMSource;
 import javax.xml.transform.stream.StreamResult;
 import java.io.File;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.List;
 
 import static net.minecraftforge.gradle.common.Constants.*;
 import static net.minecraftforge.gradle.user.UserConstants.*;
 
 public abstract class UserBasePlugin<T extends UserExtension> extends BasePlugin<T> {
+    private static final List<String> INTERNAL_JVM_ARGS = ImmutableList.of("-Xmx6G", "-Xms256M", "-Dfml.ignoreInvalidMinecraftCertificates=true");
+
     @SuppressWarnings("serial")
     @Override
     public void applyPlugin() {
@@ -497,23 +497,48 @@ public abstract class UserBasePlugin<T extends UserExtension> extends BasePlugin
             }
         }
 
+        if(root == null) {
+            throw new IllegalStateException("'genIntellijRuns' task can't be run without running 'setupDecompWorkspace'");
+        }
+
         String[][] config = new String[][]
                 {
                         new String[]
                                 {
                                         "Minecraft Client",
                                         GRADLE_START_CLIENT,
-                                        "-Xmx6G -Xms256M",
-                                        Joiner.on(' ').join(getClientRunArgs())
+                                        listToString(getClientJvmArgs()),
+                                        listToString(getClientArgs())
                                 },
                         new String[]
                                 {
                                         "Minecraft Server",
                                         GRADLE_START_SERVER,
-                                        "-Xmx6G -Xms256M -Dfml.ignoreInvalidMinecraftCertificates=true",
-                                        Joiner.on(' ').join(getServerRunArgs())
+                                        listToString(getServerJvmArgs()),
+                                        listToString(getServerArgs())
                                 }
                 };
+
+        // Clearing old MC configurations
+        NodeList children = root.getChildNodes();
+        for (int i = 0; i < children.getLength(); i++) {
+            Node item = children.item(i);
+            if(!(item instanceof Element)) continue;
+
+            Element elem = (Element) item;
+            for (String[] data : config) {
+                if (elem.getAttribute("name").equals(data[0])) {
+                    root.removeChild(item);
+                    break;
+                }
+            }
+        }
+
+        String projectName = project.getName();
+        String moduleName = ((IdeaModel) project.getExtensions().getByName("idea")).getModule().getName();
+        // if module name is not set in build.gradle it will be the same as project name by default,
+        // but since we have main module by default, we add it if the module name was not overridden by user.
+        String runModule = projectName.equals(moduleName) ? projectName + ".main" : projectName + "." + moduleName;
 
         for (String[] data : config) {
             Element child = add(root, "configuration",
@@ -537,7 +562,7 @@ public abstract class UserBasePlugin<T extends UserExtension> extends BasePlugin
             add(child, "option", "name", "ENABLE_SWING_INSPECTOR", "value", "false");
             add(child, "option", "name", "ENV_VARIABLES");
             add(child, "option", "name", "PASS_PARENT_ENVS", "value", "true");
-            add(child, "module", "name", ((IdeaModel) project.getExtensions().getByName("idea")).getModule().getName());
+            add(child, "module", "name", runModule);
             add(child, "envs");
             add(child, "RunnerSettings", "RunnerId", "Run");
             add(child, "ConfigurationWrapper", "RunnerId", "Run");
@@ -546,6 +571,35 @@ public abstract class UserBasePlugin<T extends UserExtension> extends BasePlugin
         File f = delayedFile("{RUN_DIR}").call();
         if (!f.exists())
             f.mkdirs();
+    }
+
+    private List<String> getClientArgs() {
+        return collectArgs(getMcExtension(project).getRunClient().getArgs(), getClientRunArgs());
+    }
+
+    private List<String> getClientJvmArgs() {
+        return collectArgs(getMcExtension(project).getRunClient().getJvmArgs(), INTERNAL_JVM_ARGS);
+    }
+
+    private List<String> getServerArgs() {
+        return collectArgs(getMcExtension(project).getRunServer().getArgs(), getServerRunArgs());
+    }
+
+    private List<String> getServerJvmArgs() {
+        return collectArgs(getMcExtension(project).getRunServer().getJvmArgs(), INTERNAL_JVM_ARGS);
+    }
+
+    private String listToString(List<String> strs) {return String.join(" ", strs);}
+
+    private static BaseExtension getMcExtension(Project project) {
+        return (BaseExtension) project.getExtensions().getByName(Constants.EXT_NAME_MC);
+    }
+
+    private List<String> collectArgs(List<String> userArgs, Iterable<String> internalArgs) {
+        List<String> args = new ArrayList<>();
+        internalArgs.forEach(args::add);
+        args.addAll(userArgs);
+        return args;
     }
 
     private Element add(Element parent, String name, String... values) {
@@ -786,7 +840,7 @@ public abstract class UserBasePlugin<T extends UserExtension> extends BasePlugin
             });
             exec.doFirst(new MakeDirExist(delayedFile("{RUN_DIR}")));
             exec.setMain(GRADLE_START_CLIENT);
-            exec.jvmArgs("-Xmx6G", "-Xms256M", "-Dfml.ignoreInvalidMinecraftCertificates=true");
+            exec.jvmArgs(INTERNAL_JVM_ARGS);
             exec.args(getClientRunArgs());
             exec.setStandardOutput(System.out);
             exec.setErrorOutput(System.err);
@@ -807,7 +861,7 @@ public abstract class UserBasePlugin<T extends UserExtension> extends BasePlugin
             });
             exec.doFirst(new MakeDirExist(delayedFile("{RUN_DIR}")));
             exec.setMain(GRADLE_START_SERVER);
-            exec.jvmArgs("-Xmx6G", "-Xms256M", "-Dfml.ignoreInvalidMinecraftCertificates=true");
+            exec.jvmArgs(INTERNAL_JVM_ARGS);
             exec.args(getServerRunArgs());
             exec.setStandardOutput(System.out);
             exec.setStandardInput(System.in);
