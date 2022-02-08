@@ -11,7 +11,7 @@ group = 'net.minecraftforge.gradle'
 if (project.hasProperty("push_release")) {
     version = '1.2-4.0.0'
 } else {
-    version = gitVersion()
+    version = gitVersion
 }
 
 archivesBaseName = 'ForgeGradle'
@@ -190,6 +190,14 @@ publishing {
                         name = 'anatawa12'
                         roles = ['developer']
                     }
+                }
+            }
+            pom.withXml {
+                Node pomNode = asNode()
+                pomNode.dependencies.'*'.findAll() {
+                    it.groupId.text() != 'com.github.GTNewHorizons'
+                }.each() {
+                    it.parent().remove(it)
                 }
             }
         }
