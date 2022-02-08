@@ -192,14 +192,6 @@ publishing {
                     }
                 }
             }
-            pom.withXml {
-                Node pomNode = asNode()
-                pomNode.dependencies.'*'.findAll() {
-                    it.groupId.text() != 'com.github.GTNewHorizons'
-                }.each() {
-                    it.parent().remove(it)
-                }
-            }
         }
     }
 }
