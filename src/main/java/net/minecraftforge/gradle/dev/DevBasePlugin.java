@@ -25,7 +25,6 @@ import net.minecraftforge.gradle.tasks.abstractutil.ExtractTask;
 import net.minecraftforge.gradle.tasks.dev.CompressLZMA;
 import net.minecraftforge.gradle.tasks.dev.ObfuscateTask;
 import org.apache.shiro.util.AntPathMatcher;
-import org.gradle.api.Action;
 import org.gradle.api.Project;
 import org.gradle.api.Task;
 import org.gradle.api.file.FileTree;
@@ -49,7 +48,6 @@ public abstract class DevBasePlugin extends BasePlugin<DevExtension> {
     private AntPathMatcher antMatcher = new AntPathMatcher();
     protected static final String[] JAVA_FILES = new String[]{"**.java", "*.java", "**/*.java"};
 
-    @SuppressWarnings("serial")
     @Override
     public void applyPlugin() {
         ExtractTask task = makeTask("extractWorkspace", ExtractTask.class);
@@ -109,11 +107,11 @@ public abstract class DevBasePlugin extends BasePlugin<DevExtension> {
                         List<String> lines = Files.readLines(json, Charsets.UTF_8);
                         StringBuilder buf = new StringBuilder();
                         for (String line : lines) {
-                            buf = buf.append(line).append('\n');
+                            buf.append(line).append('\n');
                         }
                         Files.write(buf.toString().getBytes(Charsets.UTF_8), json);
                     } catch (Throwable t) {
-                        Throwables.propagate(t);
+                        Throwables.throwIfUnchecked(t);
                     }
                     return true;
                 }
@@ -196,30 +194,26 @@ public abstract class DevBasePlugin extends BasePlugin<DevExtension> {
             final String extraCommand = command;
 
             Task task = project.getTasks().getByName("extractL4J");
-            task.doLast(new Action<Task>() {
-
-                @Override
-                public void execute(Task task) {
-                    File f = new File(extraCommand);
-                    if (!f.canExecute()) {
-                        boolean worked = f.setExecutable(true);
-                        project.getLogger().debug("Setting file +X " + worked + " : " + f.getPath());
-                    }
-                    FileTree tree = delayedFileTree(DevConstants.LAUNCH4J_DIR + "/bin").call();
-                    tree.visit(new FileVisitor() {
-                        @Override
-                        public void visitDir(FileVisitDetails dirDetails) {
-                        }
-
-                        @Override
-                        public void visitFile(FileVisitDetails fileDetails) {
-                            if (!fileDetails.getFile().canExecute()) {
-                                boolean worked = fileDetails.getFile().setExecutable(true);
-                                project.getLogger().debug("Setting file +X " + worked + " : " + fileDetails.getPath());
-                            }
-                        }
-                    });
+            task.doLast(task1 -> {
+                File f = new File(extraCommand);
+                if (!f.canExecute()) {
+                    boolean worked = f.setExecutable(true);
+                    project.getLogger().debug("Setting file +X " + worked + " : " + f.getPath());
                 }
+                FileTree tree = delayedFileTree(DevConstants.LAUNCH4J_DIR + "/bin").call();
+                tree.visit(new FileVisitor() {
+                    @Override
+                    public void visitDir(FileVisitDetails dirDetails) {
+                    }
+
+                    @Override
+                    public void visitFile(FileVisitDetails fileDetails) {
+                        if (!fileDetails.getFile().canExecute()) {
+                            boolean worked = fileDetails.getFile().setExecutable(true);
+                            project.getLogger().debug("Setting file +X " + worked + " : " + fileDetails.getPath());
+                        }
+                    }
+                });
             });
         }
 
@@ -251,12 +245,10 @@ public abstract class DevBasePlugin extends BasePlugin<DevExtension> {
 
         // set obfuscate extras
         Task t = project.getTasks().getByName("obfuscateJar");
-        if (t != null) {
-            ObfuscateTask obf = ((ObfuscateTask) t);
-            obf.setExtraSrg(getExtension().getSrgExtra());
-            obf.configureProject(getExtension().getSubprojects());
-            obf.configureProject(getExtension().getDirtyProject());
-        }
+        ObfuscateTask obf = ((ObfuscateTask) t);
+        obf.setExtraSrg(getExtension().getSrgExtra());
+        obf.configureProject(getExtension().getSubprojects());
+        obf.configureProject(getExtension().getDirtyProject());
 
         try {
             ExtractTask extractNatives = makeTask("extractNativesNew", ExtractTask.class);
@@ -285,7 +277,7 @@ public abstract class DevBasePlugin extends BasePlugin<DevExtension> {
                     version = JsonFactory.loadVersion(jsonFile, jsonFile.getParentFile());
                 } catch (Exception e) {
                     project.getLogger().error("" + jsonFile + " could not be parsed");
-                    Throwables.propagate(e);
+                    throw (e);
                 }
             }
 
@@ -306,7 +298,7 @@ public abstract class DevBasePlugin extends BasePlugin<DevExtension> {
             }
 
         } catch (Exception e) {
-            Throwables.propagate(e);
+            Throwables.throwIfUnchecked(e);
         }
     }
 
@@ -321,7 +313,7 @@ public abstract class DevBasePlugin extends BasePlugin<DevExtension> {
 
     protected String getServerClassPath(File json) {
         try {
-            JsonObject node = new JsonParser().parse(Files.toString(json, Charset.defaultCharset())).getAsJsonObject();
+            JsonObject node = JsonParser.parseString(Files.asCharSource(json, Charset.defaultCharset()).toString()).getAsJsonObject();
 
             StringBuilder buf = new StringBuilder();
 
@@ -344,11 +336,11 @@ public abstract class DevBasePlugin extends BasePlugin<DevExtension> {
     public String resolve(String pattern, Project project, DevExtension exten) {
         pattern = super.resolve(pattern, project, exten);
 
-        // MCP_DATA_DIR wont be resolved if the data dir doesnt eixts,,, hence...
+        // MCP_DATA_DIR won't be resolved if the data dir doesn't exist, hence...
         pattern = pattern.replace("{MCP_DATA_DIR}", "{FML_CONF_DIR}");
 
-        // For simplicities sake, if the version is in the standard format of {MC_VERSION}-{realVersion}
-        // lets trim the MC version from the replacement string.
+        // For simplicities’ sake, if the version is in the standard format of {MC_VERSION}-{realVersion}
+        // let's trim the MC version from the replacement string.
         String version = project.getVersion().toString();
         String mcSafe = exten.getVersion().replace('-', '_');
         if (version.startsWith(mcSafe + "-")) {
@@ -365,7 +357,6 @@ public abstract class DevBasePlugin extends BasePlugin<DevExtension> {
         return pattern;
     }
 
-    @SuppressWarnings("serial")
     protected static String runGit(final Project project, final File workDir, final String... args) {
         final ByteArrayOutputStream out = new ByteArrayOutputStream();
         project.exec(new Closure<ExecSpec>(project, project) {
@@ -400,11 +391,11 @@ public abstract class DevBasePlugin extends BasePlugin<DevExtension> {
     }
 
     @SuppressWarnings("unchecked")
-    protected void signJar(File archive, String keyName, String... filters) throws IOException {
+    protected void signJar(File archive, String... filters) throws IOException {
         if (!project.hasProperty("jarsigner")) return;
 
-        List<String> excludes = new ArrayList<String>();
-        List<String> includes = new ArrayList<String>();
+        List<String> excludes = new ArrayList<>();
+        List<String> includes = new ArrayList<>();
 
         for (String s : filters) {
             if (s.startsWith("!")) excludes.add(s.substring(1));
@@ -438,7 +429,7 @@ public abstract class DevBasePlugin extends BasePlugin<DevExtension> {
         Map<String, String> jarsigner = (Map<String, String>) project.property("jarsigner");
 
         Map<String, String> args = Maps.newHashMap();
-        args.put("alias", keyName);
+        args.put("alias", "forge");
         args.put("storepass", jarsigner.get("storepass"));
         args.put("keypass", jarsigner.get("keypass"));
         args.put("keystore", new File(jarsigner.get("keystore")).getAbsolutePath());

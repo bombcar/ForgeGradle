@@ -38,7 +38,7 @@ public class GenBinaryPatches extends DefaultTask {
     @InputFile
     private DelayedFile dirtyJar;
 
-    private List<DelayedFileTree> patchList = new ArrayList<DelayedFileTree>();
+    private final List<DelayedFileTree> patchList = new ArrayList<>();
 
     @InputFile
     private DelayedFile deobfDataLzma;
@@ -49,11 +49,11 @@ public class GenBinaryPatches extends DefaultTask {
     @OutputFile
     private DelayedFile outJar;
 
-    private HashMap<String, String> obfMapping = new HashMap<String, String>();
-    private HashMap<String, String> srgMapping = new HashMap<String, String>();
-    private ArrayListMultimap<String, String> innerClasses = ArrayListMultimap.create();
-    private Set<String> patchedFiles = new HashSet<String>();
-    private Delta delta = new Delta();
+    private final HashMap<String, String> obfMapping = new HashMap<>();
+    private final HashMap<String, String> srgMapping = new HashMap<>();
+    private final ArrayListMultimap<String, String> innerClasses = ArrayListMultimap.create();
+    private final Set<String> patchedFiles = new HashSet<>();
+    private final Delta delta = new Delta();
 
     @TaskAction
     public void doTask() throws Exception {
@@ -68,8 +68,8 @@ public class GenBinaryPatches extends DefaultTask {
             }
         }
 
-        HashMap<String, byte[]> runtime = new HashMap<String, byte[]>();
-        HashMap<String, byte[]> devtime = new HashMap<String, byte[]>();
+        HashMap<String, byte[]> runtime = new HashMap<>();
+        HashMap<String, byte[]> devtime = new HashMap<>();
 
         createBinPatches(runtime, "client/", getCleanClient(), getDirtyJar());
         createBinPatches(runtime, "server/", getCleanServer(), getDirtyJar());
@@ -97,7 +97,7 @@ public class GenBinaryPatches extends DefaultTask {
     private void loadMappings() throws Exception {
         Files.readLines(getSrg(), Charset.defaultCharset(), new LineProcessor<String>() {
 
-            Splitter splitter = Splitter.on(CharMatcher.anyOf(": ")).omitEmptyStrings().trimResults();
+            final Splitter splitter = Splitter.on(CharMatcher.anyOf(": ")).omitEmptyStrings().trimResults();
 
             @Override
             public boolean processLine(String line) throws IOException {

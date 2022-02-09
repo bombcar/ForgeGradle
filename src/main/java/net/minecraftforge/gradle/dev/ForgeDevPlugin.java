@@ -457,7 +457,7 @@ public class ForgeDevPlugin extends DevBasePlugin {
                 @Override
                 public void execute(Task arg0) {
                     try {
-                        signJar(((DelayedJar) arg0).getArchivePath(), "forge", "*/*/**", "!paulscode/**");
+                        signJar(((DelayedJar) arg0).getArchivePath(), "*/*/**", "!paulscode/**");
                     } catch (Exception e) {
                         throw new RuntimeException(e);
                     }

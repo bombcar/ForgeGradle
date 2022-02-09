@@ -44,7 +44,7 @@ public class LiteLoaderPlugin extends UserLibBasePlugin {
         // add in extension
         project.getExtensions().create(actualApiName(), getExtensionClass(), this);
 
-        // ensure that this lib goes everywhere MC goes. its a required lib after all.
+        // ensure that this lib goes everywhere MC goes - it's a required lib after all.
         Configuration config = project.getConfigurations().create(actualApiName());
         project.getConfigurations().getByName(UserConstants.CONFIG_MC).extendsFrom(config);
 
@@ -129,7 +129,7 @@ public class LiteLoaderPlugin extends UserLibBasePlugin {
                     try {
                         readJsonDep(task.getFile());
                     } catch (IOException e) {
-                        Throwables.propagate(e);
+                        Throwables.throwIfUnchecked(e);
                     }
                 }
 
@@ -144,7 +144,7 @@ public class LiteLoaderPlugin extends UserLibBasePlugin {
                     try {
                         readJsonDep(json.call());
                     } catch (IOException e) {
-                        Throwables.propagate(e);
+                        Throwables.throwIfUnchecked(e);
                     }
                 }
             }
@@ -152,9 +152,9 @@ public class LiteLoaderPlugin extends UserLibBasePlugin {
         });
     }
 
-    private final void readJsonDep(File json) throws IOException {
+    private void readJsonDep(File json) throws IOException {
         if (llArtifact != null) {
-            // its already set.. why parse again?
+            // it's already set - why parse again?
             return;
         }
 
@@ -162,12 +162,12 @@ public class LiteLoaderPlugin extends UserLibBasePlugin {
 
         LiteLoaderJson loaded = JsonFactory.loadLiteLoaderJson(json);
         VersionObject obj = loaded.versions.get(mcVersion);
-        if (obj == null)//|| !obj.latest.hasMcp())
+        if (obj == null)
             throw new GradleConfigurationException("LiteLoader does not have an ForgeGradle compatible edition for Minecraft " + mcVersion);
 
         llArtifact = obj.latest;
 
-        // add the dependency.
+        // add the dependency
         project.getLogger().debug("LiteLoader dep: " + llArtifact.getMcpDepString());
         project.getDependencies().add(actualApiName(), llArtifact.getMcpDepString());
     }
@@ -179,7 +179,7 @@ public class LiteLoaderPlugin extends UserLibBasePlugin {
 
     @Override
     protected Iterable<String> getClientRunArgs() {
-        return new ArrayList<String>(0);
+        return new ArrayList<>(0);
     }
 
     @Override
@@ -189,7 +189,7 @@ public class LiteLoaderPlugin extends UserLibBasePlugin {
 
     @Override
     protected Iterable<String> getServerRunArgs() {
-        return new ArrayList<String>(0);
+        return new ArrayList<>(0);
     }
 
     @Override

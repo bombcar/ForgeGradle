@@ -54,7 +54,7 @@ public class CreateStartTask extends CachedTask {
             // write file
             File outFile = new File(resourceDir, resEntry.getKey());
             outFile.getParentFile().mkdirs();
-            Files.write(out, outFile, Charsets.UTF_8);
+            Files.asCharSink(outFile, Charsets.UTF_8).write(out);
         }
 
         // now compile, if im compiling.
@@ -90,7 +90,7 @@ public class CreateStartTask extends CachedTask {
         try {
             return Resources.toString(resource, Charsets.UTF_8);
         } catch (Exception e) {
-            Throwables.propagate(e);
+            Throwables.throwIfUnchecked(e);
             return "";
         }
     }
@@ -99,7 +99,7 @@ public class CreateStartTask extends CachedTask {
      * Use Resources.getResource() for this
      *
      * @param resource resource URL
-     * @param outName  name of the resource after its been extracted
+     * @param outName  name of the resource after it's been extracted
      */
     public void addResource(URL resource, String outName) {
         resources.put(outName, getResource(resource));
