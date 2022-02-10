@@ -1123,6 +1123,7 @@ public abstract class UserBasePlugin<T extends UserExtension> extends BasePlugin
         JavaExec exec = (JavaExec) project.getTasks().getByName("runClient");
         {
             exec.classpath(project.getConfigurations().getByName("runtime"));
+            exec.classpath(project.getConfigurations().getByName("implementation"));
             exec.classpath(jarTask.getArchivePath());
             exec.dependsOn(jarTask);
         }
